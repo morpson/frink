@@ -52,8 +52,10 @@ private struct StudioView: View {
     }
 
     var body: some View {
-            HSplitView {
-                ScrollView {
+        HSplitView {
+            SidebarView(selectedMedia: $selectedMedia, selectedTool: $selectedTool)
+
+            ScrollView {
                     VStack(alignment: .leading, spacing: 14) {
                         HeaderBar(appearanceMode: $appearanceMode, isGrandmaMode: $isGrandmaMode)
                         HeroToolHeader(tool: selectedTool)
