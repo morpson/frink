@@ -313,7 +313,7 @@ private struct HeroToolHeader: View {
                     .font(.system(size: 44, weight: .black, design: .rounded))
                     .kerning(0)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.56)
+                    .minimumScaleFactor(0.3)
 
                 Text(tool.subtitle)
                     .font(.headline)
@@ -324,6 +324,8 @@ private struct HeroToolHeader: View {
                     ForEach(tool.formats.prefix(5), id: \.self) { format in
                         Text(format)
                             .font(.caption.bold())
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: true)
                             .padding(.horizontal, 9)
                             .padding(.vertical, 5)
                             .background(.black.opacity(0.12))
@@ -332,7 +334,7 @@ private struct HeroToolHeader: View {
                     Text("Formats supported")
                         .font(.caption)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.75)
+                        .minimumScaleFactor(0.5)
                 }
             }
             .layoutPriority(1)
