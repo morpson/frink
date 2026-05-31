@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- SEO & Canonical Metadata -->
+  <title>Frink — Lightning-Fast Native macOS Media Utility</title>
+  <meta name="description" content="Frink is a native, hardware-accelerated macOS app to compress, convert, and process audio, video, and images on Apple Silicon and Intel. Built with Swift & SwiftUI.">
+  <link rel="canonical" href="https://colemayson.github.io/frink/">
+  
+  <!-- OpenGraph Cards -->
+  <meta property="og:title" content="Frink — Lightning-Fast Native macOS Media Utility">
+  <meta property="og:description" content="Compress, convert, and process video, images, and audio natively on macOS. Full Apple Silicon hardware acceleration.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://colemayson.github.io/frink/">
+  <meta property="og:image" content="assets/appicon.png">
+  
+  <!-- Fonts & Stylesheet -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/appicon.png">
+</head>
+<body>
+
+  <!-- Sticky Header -->
+  <header>
+    <div class="container">
+      <nav aria-label="Main Navigation">
+        <a href="#" class="logo-group" id="nav-logo-link">
+          <img src="assets/appicon.png" alt="Frink App Icon">
+          <span class="brand-text">frink</span>
+        </a>
+        <div class="nav-links">
+          <a href="#features" id="nav-link-features">Features</a>
+          <a href="#grandma" id="nav-link-grandma">Grandma Mode</a>
+          <a href="https://gumroad.com/l/frink-media" class="btn-primary" id="nav-btn-download" target="_blank" rel="noopener">Download</a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="container hero" aria-labelledby="hero-title">
+      <div>
+        <span class="hero-tag">macOS Native App</span>
+        <h1 id="hero-title">High-speed media tools <br><span class="highlight">for Apple Silicon</span></h1>
+        <p>Frink is a lightweight macOS utility built in Swift & SwiftUI that compiles to native Universal Binaries. Shrink, convert, and format audio, video, and images in batches with hardware-accelerated VideoToolbox rendering and built-in FFmpeg GPL integration.</p>
+        <div class="hero-ctas">
+          <a href="https://gumroad.com/l/frink-media" class="btn-primary" id="hero-cta-gumroad" target="_blank" rel="noopener">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Get it on Gumroad
+          </a>
+          <a href="#features" class="btn-secondary" id="hero-cta-features">Explore Features</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="hero-icon-container">
+          <img src="assets/appicon.png" alt="Frink App Icon 512px">
+        </div>
+      </div>
+    </section>
+
+    <!-- Detailed Features Showcase -->
+    <section id="features" class="features-section" aria-labelledby="features-title">
+      <div class="container">
+        <div class="section-header">
+          <h2 id="features-title">Optimized for Every Format</h2>
+          <p>Whether you need to shrink heavy movie clips, convert image formats, or normalize audio tracks, Frink compiles directly to native code to run without translation overhead.</p>
+        </div>
+        
+        <div class="features-grid">
+          <!-- Video Card -->
+          <article class="feature-card card-video scroll-animated">
+            <div class="feature-icon-wrapper" aria-hidden="true">🎬</div>
+            <h3>Video Tools</h3>
+            <p>Optimized for VideoToolbox rendering. Shrink high-resolution video streams quickly and convert audio formats natively.</p>
+            <ul class="feature-list">
+              <li><strong>Video Compression:</strong> Shrink MP4, MOV, and M4V</li>
+              <li><strong>Video Conversion:</strong> Batch convert streams cleanly</li>
+              <li><strong>Video to Animation:</strong> WebP, AVIF, and GIF</li>
+              <li><strong>Extract Audio:</strong> Save soundtracks from videos</li>
+            </ul>
+          </article>
+
+          <!-- Image Card -->
+          <article class="feature-card card-image scroll-animated">
+            <div class="feature-icon-wrapper" aria-hidden="true">🖼️</div>
+            <h3>Image Tools</h3>
+            <p>Preserves visual fidelity and frame animations while maximizing compression parameters using modern local decoders.</p>
+            <ul class="feature-list">
+              <li><strong>Image Compression:</strong> Shrink without pixel loss</li>
+              <li><strong>Format Conversion:</strong> JPEG, PNG, WebP, AVIF, HEIC</li>
+              <li><strong>Lossless Optimization:</strong> MozJPEG & OxiPNG paths</li>
+              <li><strong>Animation Protection:</strong> Maintains frames intact</li>
+            </ul>
+          </article>
+
+          <!-- Audio Card -->
+          <article class="feature-card card-audio scroll-animated">
+            <div class="feature-icon-wrapper" aria-hidden="true">🔊</div>
+            <h3>Audio Tools</h3>
+            <p>Adjust channels, sample rates, and bitrates with smart upscaling protection to retain high acoustic fidelity.</p>
+            <ul class="feature-list">
+              <li><strong>Audio Compression:</strong> Multi-format compression</li>
+              <li><strong>Audio Conversion:</strong> MP3, M4A, FLAC, and WAV</li>
+              <li><strong>Audio Filters:</strong> Leveling, dynamic normalization</li>
+              <li><strong>Upscale Prevention:</strong> Quality guard filters</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Grandma Mode Feature Spotlight -->
+    <section id="grandma" class="container grandma-spotlight scroll-animated" aria-labelledby="grandma-title">
+      <div class="grandma-content">
+        <span class="grandma-badge">Intuitive Design</span>
+        <h2 id="grandma-title">One-Click Grandma Mode</h2>
+        <p>No codecs, container details, or bitrates to figure out. Grandma Mode offers a zero-configuration interface designed for simplicity. Just drag and drop your media files and get instant, high-quality results without worrying about parameters.</p>
+        <a href="https://gumroad.com/l/frink-media" class="btn-primary" id="grandma-cta-gumroad" target="_blank" rel="noopener">Try it Now</a>
+      </div>
+      <div class="grandma-visual">
+        <img src="assets/grandma.png" alt="Grandma Mode Visual Mockup">
+      </div>
+    </section>
+
+    <!-- Call to Action Section -->
+    <section class="cta-section" aria-labelledby="cta-title">
+      <div class="container">
+        <div class="cta-box scroll-animated">
+          <h2 id="cta-title">Start Processing Media Faster</h2>
+          <p>Get Frink for macOS today and experience hardware-accelerated universal compilation on Apple Silicon and Intel hardware.</p>
+          <a href="https://gumroad.com/l/frink-media" class="btn-primary" id="footer-cta-download" target="_blank" rel="noopener">Download for macOS</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer role="contentinfo">
+    <div class="container footer-content">
+      <a href="#" class="footer-logo" id="footer-logo-link">
+        <img src="assets/appicon.png" alt="Frink App Icon">
+        <span>frink</span>
+      </a>
+      <div class="footer-links">
+        <a href="#features" id="footer-link-features">Features</a>
+        <a href="#grandma" id="footer-link-grandma">Grandma Mode</a>
+        <a href="https://gumroad.com/l/frink-media" id="footer-link-gumroad" target="_blank" rel="noopener">Gumroad Listing</a>
+      </div>
+      <p>&copy; 2026 Frink. All rights reserved. macOS and SwiftUI are trademarks of Apple Inc.</p>
+    </div>
+  </footer>
+
+  <!-- Scroll Animation Fallback Script -->
+  <script>
+    // Fallback script if the browser doesn't support native CSS view timeline animations (e.g. Firefox)
+    if (!CSS.supports('(animation-timeline: view()) and (animation-range: entry)')) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.style.opacity = '1';
+              entry.target.style.transform = 'translateY(0)';
+              entry.target.style.transition = 'opacity 0.8s ease-out, transform 0.8s ease-out';
+            }
+          });
+        },
+        {
+          threshold: 0.15
+        }
+      );
+
+      document.querySelectorAll('.scroll-animated').forEach((el) => {
+        // Initial state before observer triggers
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(30px)';
+        observer.observe(el);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+.DS_Store
+.build/
+.vscode/
+dist/
+*.png
+
+# Exclude universal ffmpeg binaries to stay under GitHub's 100MB limit
+vendor/ffmpeg/macos-universal/ffmpeg
+vendor/ffmpeg/macos-universal/ffprobe
+
+# Keep docs/assets images but ignore top-level/root loose screenshots
+!docs/assets/*.png
