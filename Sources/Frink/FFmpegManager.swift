@@ -331,9 +331,11 @@ struct AnimationOptions {
 
 struct ImageCompressionOptions {
     var resolution: OutputResolution = .original
+    var resolutionLabel: String = "Original"
     var quality = 82
     var format: ImageFormat = .jpeg
     var preserveAnimation = true
+    var stripMetadata = true
 }
 
 struct AudioCompressionOptions {
@@ -447,7 +449,7 @@ enum ImageFormat {
     }
 }
 
-enum AudioFormat {
+enum AudioFormat: String {
     case mp3
     case m4a
     case aac

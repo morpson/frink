@@ -139,100 +139,6 @@ private struct SidebarView: View {
     }
 }
 
-private struct AccelerationStatusCard: View {
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "cpu")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.yellow)
-                .frame(width: 26, height: 26)
-                .background(Color.yellow.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-
-            VStack(alignment: .leading, spacing: 0) {
-                #if arch(arm64)
-                Text("VideoToolbox")
-                    .font(.system(size: 11, weight: .bold, design: .rounded))
-                Text("Hardware Acceleration")
-                    .font(.system(size: 9, weight: .medium))
-                    .foregroundStyle(.secondary)
-                #else
-                Text("FFmpeg CPU")
-                    .font(.system(size: 11, weight: .bold, design: .rounded))
-                Text("Software Encoding")
-                    .font(.system(size: 9, weight: .medium))
-                    .foregroundStyle(.secondary)
-                #endif
-            }
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(.regularMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(.primary.opacity(0.08), lineWidth: 1)
-        )
-    }
-}
-
-private struct OperationalStatusWidget: View {
-    var body: some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(Color.green)
-                .frame(width: 7, height: 7)
-            Text("All Systems Operational")
-                .font(.system(size: 11, weight: .bold, design: .rounded))
-                .foregroundStyle(.secondary)
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(.regularMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(.primary.opacity(0.08), lineWidth: 1)
-        )
-    }
-}
-
-private struct CompactAccelerationStatusCard: View {
-    var body: some View {
-        Image(systemName: "cpu")
-            .font(.system(size: 14, weight: .semibold))
-            .foregroundStyle(.yellow)
-            .frame(width: 32, height: 32)
-            .background(Color.yellow.opacity(0.12))
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(.primary.opacity(0.08), lineWidth: 1)
-            )
-            #if arch(arm64)
-            .help("VideoToolbox Hardware Acceleration")
-            #else
-            .help("FFmpeg CPU Software Encoding")
-            #endif
-    }
-}
-
-private struct CompactOperationalStatusWidget: View {
-    var body: some View {
-        Circle()
-            .fill(Color.green)
-            .frame(width: 10, height: 10)
-            .frame(width: 32, height: 32)
-            .background(.regularMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(.primary.opacity(0.08), lineWidth: 1)
-            )
-            .help("All Systems Operational")
-    }
-}
-
 private struct HeaderBar: View {
     @Binding var appearanceMode: String
     @Binding var isGrandmaMode: Bool
@@ -256,14 +162,6 @@ private struct HeaderBar: View {
 
                 HStack(alignment: .center, spacing: 12) {
                     Spacer()
-
-                    if width > 760 {
-                        AccelerationStatusCard()
-                        OperationalStatusWidget()
-                    } else if width > 520 {
-                        CompactAccelerationStatusCard()
-                        CompactOperationalStatusWidget()
-                    }
 
                     Button {
                         isGrandmaMode = true
@@ -481,21 +379,6 @@ private struct DropZoneView: View {
 private struct ToolOptionsView: View {
     let tool: MediaTool
     @ObservedObject var queue: BatchQueueModel
-    @State private var resolution = "1080p"
-    @State private var frameRate = "30 fps (lower only)"
-    @State private var bitrateMode = "Auto"
-    @State private var bitrate = 8000.0
-    @State private var quality = 82.0
-    @State private var audioBitrate = "160 kbps"
-    @State private var sampleRate = "44.1 kHz"
-    @State private var channels = "Stereo"
-    @State private var outputFormat = ""
-    @State private var preserveAnimation = true
-    @State private var smartDecision = true
-    @State private var language = "English"
-    @State private var pitch = 1.0
-    @State private var speechRate = 0.48
-    @State private var effects = Set<AudioEffect>([.dynamicNormalize])
 
     private let resolutions = ["Original", "4K", "2K", "1080p", "720p"]
     private let frameRates = ["60 fps (lower only)", "30 fps (lower only)", "24 fps (lower only)", "23.98 fps (lower only)"]
@@ -506,70 +389,71 @@ private struct ToolOptionsView: View {
             case .videoCompression:
                 RecommendationBanner(suggestion: queue.latestSuggestion, expectedKind: .video)
                 resolutionPicker
-                pickerRow("Frame Rate", selection: $frameRate, values: frameRates, note: "23.98 - 60 fps")
-                segmentedRow("Bitrate", selection: $bitrateMode, values: ["Auto", "Custom"])
-                sliderRow(value: $bitrate, range: 500...15000, label: String(format: "%.1f Mbps", bitrate / 1000))
-                Toggle("Keep original if output is larger", isOn: $smartDecision)
+                pickerRow("Frame Rate", selection: $queue.frameRate, values: frameRates, note: "23.98 - 60 fps")
+                segmentedRow("Bitrate", selection: $queue.bitrateMode, values: ["Auto", "Custom"])
+                sliderRow(value: $queue.bitrate, range: 500...15000, label: String(format: "%.1f Mbps", queue.bitrate / 1000))
+                Toggle("Keep original if output is larger", isOn: $queue.smartDecision)
 
             case .videoConversion:
-                formatPicker(["MP4", "MOV", "M4V", "WebM"])
+                formatPicker(["MP4", "MOV", "M4V", "WebM"], selection: $queue.outputFormat)
                 FeatureList(items: ["Lossless remux where possible", "Smart audio copy", "VideoToolbox for H.264/HEVC", "VP9 for WebM", "Preserve source bitrate"])
 
             case .videoAnimation:
-                formatPicker(["WebP", "AVIF", "GIF"])
-                pickerRow("Frame Rate", selection: $frameRate, values: ["15 fps", "12 fps", "10 fps"], note: "optimized")
+                formatPicker(["WebP", "AVIF", "GIF"], selection: $queue.outputFormat)
+                pickerRow("Frame Rate", selection: $queue.frameRate, values: ["15 fps", "12 fps", "10 fps"], note: "optimized")
                 FeatureList(items: ["High quality presets", "Direct AVIF through libaom-av1", "Timeline-aware output"])
 
             case .videoAudioEffects:
-                formatPicker(["MP4", "MOV", "M4V"])
-                EffectsPicker(effects: $effects)
+                formatPicker(["MP4", "MOV", "M4V"], selection: $queue.outputFormat)
+                EffectsPicker(effects: $queue.effects)
                 FeatureList(items: ["Applies filters to the audio track", "Copies video stream without re-encoding", "Useful for interviews, screen recordings, and noisy clips"])
 
             case .extractAudio:
-                formatPicker(["MP3", "M4A", "AAC", "FLAC", "WAV", "OGG"])
+                formatPicker(["MP3", "M4A", "AAC", "FLAC", "WAV", "OGG"], selection: $queue.outputFormat)
                 FeatureList(items: ["Copies compatible streams", "Falls back to efficient encoding"])
 
             case .imageCompression:
                 RecommendationBanner(suggestion: queue.latestSuggestion, expectedKind: .image)
-                resolutionPicker
-                sliderRow(value: $quality, range: 10...100, label: "\(Int(quality))% quality")
-                Toggle("Preserve animation when detected", isOn: $preserveAnimation)
-                Toggle("Keep original if output is larger", isOn: $smartDecision)
+                imageResolutionPicker
+                sliderRow(value: $queue.quality, range: 10...100, label: "\(Int(queue.quality))% quality")
+                Toggle("Strip EXIF & Metadata", isOn: $queue.stripMetadata)
+                Toggle("Preserve animation when detected", isOn: $queue.preserveAnimation)
+                Toggle("Keep original if output is larger", isOn: $queue.smartDecision)
                 FeatureList(items: ["MozJPEG for JPEG", "OxiPNG/Zopfli lossless PNG", "Animated WebP/AVIF/GIF detection", "Frame count indicator"])
 
             case .imageConversion:
-                formatPicker(["JPEG", "PNG", "WebP", "HEIC", "AVIF", "GIF"])
+                formatPicker(["JPEG", "PNG", "WebP", "HEIC", "AVIF", "GIF"], selection: $queue.outputFormat)
                 FeatureList(items: ["Format conversion only", "No extra compression", "Batch processing"])
 
             case .audioCompression:
                 RecommendationBanner(suggestion: queue.latestSuggestion, expectedKind: .audio)
-                pickerRow("Bitrate", selection: $audioBitrate, values: ["32 kbps", "48 kbps", "64 kbps", "96 kbps", "128 kbps", "160 kbps", "256 kbps", "320 kbps"], note: nil)
-                pickerRow("Sample Rate", selection: $sampleRate, values: ["8 kHz", "11.025 kHz", "16 kHz", "22.05 kHz", "32 kHz", "44.1 kHz", "48 kHz"], note: nil)
-                segmentedRow("Channels", selection: $channels, values: ["Mono", "Stereo"])
-                Toggle("Prevent low-quality audio upscaling", isOn: $smartDecision)
+                pickerRow("Bitrate", selection: $queue.audioBitrate, values: ["32 kbps", "48 kbps", "64 kbps", "96 kbps", "128 kbps", "160 kbps", "256 kbps", "320 kbps"], note: nil)
+                pickerRow("Sample Rate", selection: $queue.sampleRate, values: ["8 kHz", "11.025 kHz", "16 kHz", "22.05 kHz", "32 kHz", "44.1 kHz", "48 kHz"], note: nil)
+                segmentedRow("Channels", selection: $queue.channels, values: ["Mono", "Stereo"])
+                Toggle("Prevent low-quality audio upscaling", isOn: $queue.smartDecision)
 
             case .audioConversion:
-                formatPicker(["MP3", "M4A", "FLAC", "WAV", "WebM"])
+                formatPicker(["MP3", "M4A", "FLAC", "WAV", "WebM"], selection: $queue.outputFormat)
                 FeatureList(items: ["Lossless conversion where possible", "Batch conversion", "Smart stream copy"])
 
             case .audioToText:
-                pickerRow("Language", selection: $language, values: ["English", "Chinese", "Japanese", "Korean", "Spanish", "French", "German", "Italian", "Portuguese", "Russian"], note: "Apple Speech")
+                pickerRow("Language", selection: $queue.language, values: ["English", "Chinese", "Japanese", "Korean", "Spanish", "French", "German", "Italian", "Portuguese", "Russian"], note: "Apple Speech")
                 FeatureList(items: ["Copy transcription to clipboard", "Local framework integration target"])
 
             case .textToSpeech:
-                pickerRow("Voice Language", selection: $language, values: ["English", "Chinese", "Japanese", "Korean", "Spanish", "French", "German", "Italian", "Portuguese", "Russian"], note: "optimized voice")
-                sliderRow(value: $pitch, range: 0.5...2.0, label: String(format: "Pitch %.1f", pitch))
-                sliderRow(value: $speechRate, range: 0.2...0.8, label: String(format: "Rate %.2f", speechRate))
+                pickerRow("Voice Language", selection: $queue.language, values: ["English", "Chinese", "Japanese", "Korean", "Spanish", "French", "German", "Italian", "Portuguese", "Russian"], note: "optimized voice")
+                sliderRow(value: $queue.pitch, range: 0.5...2.0, label: String(format: "Pitch %.1f", queue.pitch))
+                sliderRow(value: $queue.speechRate, range: 0.2...0.8, label: String(format: "Rate %.2f", queue.speechRate))
                 FeatureList(items: ["Import text files", "Save WAV to Files or iCloud", "Progress indicator"])
 
             case .audioEffects:
-                formatPicker(["MP3", "M4A", "FLAC", "WAV"])
-                EffectsPicker(effects: $effects)
+                formatPicker(["MP3", "M4A", "FLAC", "WAV"], selection: $queue.outputFormat)
+                EffectsPicker(effects: $queue.effects)
             }
         }
         .onAppear {
-            if outputFormat.isEmpty {
-                outputFormat = tool.formats.first ?? ""
+            if queue.outputFormat.isEmpty {
+                queue.outputFormat = tool.formats.first ?? ""
             }
         }
         .onChange(of: queue.recommendationVersion) { _ in
@@ -582,18 +466,18 @@ private struct ToolOptionsView: View {
 
         switch suggestion.kind {
         case .video:
-            resolution = suggestion.resolution
-            frameRate = suggestion.frameRateLabel
-            bitrateMode = suggestion.bitrateMode
-            bitrate = Double(suggestion.bitrateKbps)
+            queue.resolution = suggestion.resolution
+            queue.frameRate = suggestion.frameRateLabel
+            queue.bitrateMode = suggestion.bitrateMode
+            queue.bitrate = Double(suggestion.bitrateKbps)
         case .image:
-            resolution = suggestion.resolution
-            quality = Double(suggestion.quality)
-            preserveAnimation = suggestion.preserveAnimation
+            queue.resolution = suggestion.resolution
+            queue.quality = Double(suggestion.quality)
+            queue.preserveAnimation = suggestion.preserveAnimation
         case .audio:
-            audioBitrate = "\(suggestion.bitrateKbps) kbps"
-            sampleRate = suggestion.sampleRateLabel
-            channels = suggestion.channelsLabel
+            queue.audioBitrate = "\(suggestion.bitrateKbps) kbps"
+            queue.sampleRate = suggestion.sampleRateLabel
+            queue.channels = suggestion.channelsLabel
         }
     }
 
@@ -601,25 +485,45 @@ private struct ToolOptionsView: View {
         VStack(alignment: .leading, spacing: 7) {
             Text("Resolution")
                 .font(.headline)
-            Picker("Resolution", selection: $resolution) {
-                ForEach(resolutions, id: \.self) { Text($0) }
+            Picker("Resolution", selection: $queue.resolution) {
+                ForEach(resolutions, id: \.self) { Text($0).tag($0) }
             }
             .pickerStyle(.segmented)
             .frame(maxWidth: 360)
         }
     }
 
-    private func formatPicker(_ formats: [String]) -> some View {
+    private var imageResolutionPicker: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text("Max Resize Limit")
+                .font(.headline)
+            Picker("Max Resize Limit", selection: $queue.resolution) {
+                Text("Original").tag("Original")
+                Text("3840px (4K)").tag("3840px")
+                Text("2560px (2K)").tag("2560px")
+                Text("1920px (1080p)").tag("1920px")
+                Text("1280px (720p)").tag("1280px")
+                Text("800px").tag("800px")
+                Text("640px").tag("640px")
+            }
+            .pickerStyle(.menu)
+            .frame(maxWidth: 280)
+        }
+    }
+
+    private func formatPicker(_ formats: [String], selection: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             Text("Output Format")
                 .font(.headline)
-            Picker("Output Format", selection: $outputFormat) {
+            Picker("Output Format", selection: selection) {
                 ForEach(formats, id: \.self) { Text($0).tag($0) }
             }
             .pickerStyle(.segmented)
             .frame(maxWidth: 360)
             .onAppear {
-                outputFormat = formats.first ?? ""
+                if selection.wrappedValue.isEmpty {
+                    selection.wrappedValue = formats.first ?? ""
+                }
             }
         }
     }
@@ -2199,6 +2103,22 @@ private final class BatchQueueModel: ObservableObject {
     @Published var items: [QueueItem] = []
     @Published var latestSuggestion: CompressionSuggestion?
     @Published var recommendationVersion = 0
+    @Published var resolution = "1080p"
+    @Published var frameRate = "30 fps (lower only)"
+    @Published var bitrateMode = "Auto"
+    @Published var bitrate = 8000.0
+    @Published var quality = 82.0
+    @Published var audioBitrate = "160 kbps"
+    @Published var sampleRate = "44.1 kHz"
+    @Published var channels = "Stereo"
+    @Published var outputFormat = ""
+    @Published var preserveAnimation = true
+    @Published var smartDecision = true
+    @Published var language = "English"
+    @Published var pitch = 1.0
+    @Published var speechRate = 0.48
+    @Published var effects = Set<AudioEffect>([.dynamicNormalize])
+    @Published var stripMetadata = true
 
     var hasActiveJobs: Bool {
         items.contains { $0.progress > 0 && $0.progress < 1 }
@@ -2285,17 +2205,16 @@ private final class BatchQueueModel: ObservableObject {
                     if processingTool == .imageCompression {
                         var options = ImageCompressionOptions()
                         options.format = ImageFormat(fileExtension: outputURL.pathExtension)
-                        if let suggestion = item.suggestion, suggestion.kind == .image {
-                            options.resolution = OutputResolution(label: suggestion.resolution)
-                            options.quality = suggestion.quality
-                            options.preserveAnimation = suggestion.preserveAnimation
-                        }
+                        options.resolutionLabel = self.resolution
+                        options.quality = Int(self.quality)
+                        options.preserveAnimation = self.preserveAnimation
+                        options.stripMetadata = self.stripMetadata
                         try await FFmpegManager.shared.compressImage(input: item.url, output: outputURL, options: options)
                     } else if processingTool == .imageConversion {
                         let format = ImageFormat(fileExtension: outputURL.pathExtension)
                         try await FFmpegManager.shared.convertImage(input: item.url, output: outputURL, format: format)
                     } else {
-                        let job = try Self.job(for: item, tool: processingTool, output: outputURL)
+                        let job = try self.job(for: item, tool: processingTool, output: outputURL)
                         _ = try await FFmpegManager.shared.run(job) { progress in
                             guard progress.percent > 0 else { return }
                             Task { @MainActor [weak self] in
@@ -2420,50 +2339,78 @@ private final class BatchQueueModel: ObservableObject {
         }
     }
 
-    private static func job(for item: QueueItem, tool: MediaTool, output: URL) throws -> FFmpegJob {
+    private func job(for item: QueueItem, tool: MediaTool, output: URL) throws -> FFmpegJob {
         switch tool {
         case .videoCompression:
             var options = VideoCompressionOptions()
-            if let suggestion = item.suggestion, suggestion.kind == .video {
-                options.resolution = OutputResolution(label: suggestion.resolution)
-                options.frameRate = Double(suggestion.frameRateLabel.components(separatedBy: " ").first ?? "")
-                options.bitrateMode = suggestion.bitrateMode == "Custom" ? .custom : .auto
-                options.customBitrateKbps = suggestion.bitrateKbps
-            }
+            options.resolution = OutputResolution(label: self.resolution)
+            options.frameRate = Double(self.frameRate.components(separatedBy: " ").first ?? "")
+            options.bitrateMode = self.bitrateMode == "Custom" ? .custom : .auto
+            options.customBitrateKbps = Int(self.bitrate)
             return .videoCompression(input: item.url, output: output, options: options, expectedDuration: item.duration)
         case .videoConversion:
-            return .videoConversion(input: item.url, output: output, options: VideoConversionOptions(), expectedDuration: item.duration)
+            var options = VideoConversionOptions()
+            options.losslessWhenPossible = self.smartDecision
+            return .videoConversion(input: item.url, output: output, options: options, expectedDuration: item.duration)
         case .videoAnimation:
-            return .videoAnimation(input: item.url, output: output, options: AnimationOptions(), expectedDuration: item.duration)
+            var options = AnimationOptions()
+            options.frameRate = Int(self.frameRate.components(separatedBy: " ").first ?? "") ?? 15
+            options.quality = Int(self.quality)
+            return .videoAnimation(input: item.url, output: output, options: options, expectedDuration: item.duration)
         case .videoAudioEffects:
-            return .videoAudioEffects(input: item.url, output: output, effects: [.dynamicNormalize], expectedDuration: item.duration)
+            return .videoAudioEffects(input: item.url, output: output, effects: self.effects.map(\.filterType), expectedDuration: item.duration)
         case .extractAudio:
-            return .extractAudio(input: item.url, output: output, format: .m4a, expectedDuration: item.duration)
+            let format = AudioFormat(rawValue: self.outputFormat.lowercased()) ?? .m4a
+            return .extractAudio(input: item.url, output: output, format: format, expectedDuration: item.duration)
         case .imageCompression:
             var options = ImageCompressionOptions()
             options.format = ImageFormat(fileExtension: output.pathExtension)
-            if let suggestion = item.suggestion, suggestion.kind == .image {
-                options.resolution = OutputResolution(label: suggestion.resolution)
-                options.quality = suggestion.quality
-                options.preserveAnimation = suggestion.preserveAnimation
-            }
+            options.resolutionLabel = self.resolution
+            options.quality = Int(self.quality)
+            options.preserveAnimation = self.preserveAnimation
+            options.stripMetadata = self.stripMetadata
             return .imageCompression(input: item.url, output: output, options: options)
         case .imageConversion:
-            return .imageConversion(input: item.url, output: output, format: .jpeg)
+            let format = ImageFormat(fileExtension: output.pathExtension)
+            return .imageConversion(input: item.url, output: output, format: format)
         case .audioCompression:
             var options = AudioCompressionOptions()
-            if let suggestion = item.suggestion, suggestion.kind == .audio {
-                options.bitrateKbps = suggestion.bitrateKbps
-                options.sampleRateHz = AudioSampleRate(label: suggestion.sampleRateLabel).hertz
-                options.channels = suggestion.channelsLabel == "Mono" ? .mono : .stereo
+            options.bitrateKbps = Int(self.audioBitrate.replacingOccurrences(of: " kbps", with: "")) ?? 160
+            let hzString = self.sampleRate.replacingOccurrences(of: " kHz", with: "")
+            if let hzVal = Double(hzString) {
+                options.sampleRateHz = Int(hzVal * 1000)
+            } else {
+                options.sampleRateHz = 44100
             }
+            options.channels = self.channels == "Mono" ? .mono : .stereo
+            options.preventUpscaling = self.smartDecision
             return .audioCompression(input: item.url, output: output, options: options, expectedDuration: item.duration)
         case .audioConversion:
-            return .audioConversion(input: item.url, output: output, format: .m4a, expectedDuration: item.duration)
+            let format = AudioFormat(rawValue: self.outputFormat.lowercased()) ?? .m4a
+            return .audioConversion(input: item.url, output: output, format: format, expectedDuration: item.duration)
         case .audioEffects:
-            return .audioEffects(input: item.url, output: output, effects: [.dynamicNormalize], expectedDuration: item.duration)
+            return .audioEffects(input: item.url, output: output, effects: self.effects.map(\.filterType), expectedDuration: item.duration)
         case .audioToText, .textToSpeech:
             throw ProcessingError.unsupportedTool(tool.title)
+        }
+    }
+}
+
+private extension AudioEffect {
+    var filterType: AudioFilter {
+        switch self {
+        case .firequalizer: return .firequalizer
+        case .dynamicNormalize: return .dynamicNormalize
+        case .loudNormalize: return .loudNormalize
+        case .stereoWiden: return .stereoWiden
+        case .extraStereo: return .extraStereo
+        case .speechIsolation: return .speechIsolation
+        case .speechNormalize: return .speechNormalize
+        case .noiseReduction: return .noiseReduction
+        case .lowerPitch: return .lowerPitch
+        case .raisePitch: return .raisePitch
+        case .chorus: return .chorus
+        case .reverb: return .reverb
         }
     }
 }
