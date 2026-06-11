@@ -858,6 +858,8 @@ private struct GrandmaModeView: View {
     @Binding var isGrandmaMode: Bool
     @State private var selectedKind = MediaKind.video
     @Environment(\.colorScheme) private var colorScheme
+    @State private var showAddedFeedback = false
+    @State private var addedCount = 0
 
     var body: some View {
         VStack(spacing: 26) {
@@ -918,36 +920,70 @@ private struct GrandmaModeView: View {
             .font(.title)
 
             VStack(spacing: 18) {
-                MediaArtwork(kind: selectedKind)
-                    .frame(maxWidth: 132, maxHeight: 132)
-                Text("Drop \(selectedKind.dropLabel) here")
-                    .font(.system(size: 38, weight: .black, design: .rounded))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                Text(grandmaSubtitle)
-                    .font(.title2)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
+                if showAddedFeedback {
+                    VStack(spacing: 20) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 80, weight: .bold))
+                            .foregroundColor(.green)
+                            .transition(.scale.combined(with: .opacity))
+                        Text("Added \(addedCount) \(addedCount == 1 ? "file" : "files")!")
+                            .font(.system(size: 38, weight: .black, design: .rounded))
+                            .foregroundColor(.green)
+                            .transition(.slide.combined(with: .opacity))
+                        Text("Successfully added to the queue.")
+                            .font(.title2)
+                            .foregroundStyle(.secondary)
+                            .transition(.opacity)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 260)
+                } else {
+                    MediaArtwork(kind: selectedKind)
+                        .frame(maxWidth: 132, maxHeight: 132)
+                    Text("Drop \(selectedKind.dropLabel) here")
+                        .font(.system(size: 38, weight: .black, design: .rounded))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    Text(grandmaSubtitle)
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
 
-                Button {
-                    queue.chooseFiles(preferredKind: selectedKind)
-                } label: {
-                    Label("Choose Files", systemImage: "plus")
-                        .font(.system(size: 30, weight: .bold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 18)
+                    Button {
+                        queue.chooseFiles(preferredKind: selectedKind)
+                    } label: {
+                        Label("Choose Files", systemImage: "plus")
+                            .font(.system(size: 30, weight: .bold))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 18)
+                    }
+                    .buttonStyle(FrinkActionButtonStyle(color: selectedKind.color, compact: false))
+                    .controlSize(.large)
                 }
-                .buttonStyle(FrinkActionButtonStyle(color: selectedKind.color, compact: false))
-                .controlSize(.large)
             }
             .padding(34)
             .frame(maxWidth: .infinity, minHeight: 330)
-            .background(selectedKind.color.opacity(0.22))
+            .background(showAddedFeedback ? Color.green.opacity(0.18) : selectedKind.color.opacity(0.22))
             .clipShape(RoundedRectangle(cornerRadius: 8))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(selectedKind.color.opacity(0.55), lineWidth: 2))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(showAddedFeedback ? Color.green : selectedKind.color.opacity(0.55), lineWidth: showAddedFeedback ? 4 : 2))
             .onDrop(of: [.fileURL], isTargeted: nil) { providers in
-                queue.addDroppedItems(providers: providers, preferredKind: selectedKind)
+                let urlProviders = providers.filter { $0.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) }
+                let count = urlProviders.count
+                if count > 0 {
+                    queue.addDroppedItems(providers: providers, preferredKind: selectedKind)
+                    addedCount = count
+                    withAnimation(.spring()) {
+                        showAddedFeedback = true
+                    }
+                    Task {
+                        try? await Task.sleep(nanoseconds: 2_000_000_000)
+                        await MainActor.run {
+                            withAnimation(.easeInOut) {
+                                showAddedFeedback = false
+                            }
+                        }
+                    }
+                }
                 return true
             }
 
@@ -2193,7 +2229,7 @@ private final class BatchQueueModel: ObservableObject {
 
                 do {
                     let processingTool = Self.processingTool(for: item, fallbackTool: tool)
-                    let outputURL = try Self.outputURL(for: item, tool: processingTool)
+                    let outputURL = try self.outputURL(for: item, tool: processingTool)
                     
                     await MainActor.run {
                         if let index = self.items.firstIndex(where: { $0.id == item.id }) {
@@ -2226,10 +2262,33 @@ private final class BatchQueueModel: ObservableObject {
                         }
                     }
 
+                    let fileManager = FileManager.default
+                    if fileManager.fileExists(atPath: outputURL.path) {
+                        let inputBytes = (try? fileManager.attributesOfItem(atPath: item.url.path)[.size] as? Int64) ?? 0
+                        let outputBytes = (try? fileManager.attributesOfItem(atPath: outputURL.path)[.size] as? Int64) ?? 0
+                        
+                        let isCompression = [MediaTool.imageCompression, MediaTool.videoCompression, MediaTool.audioCompression].contains(processingTool)
+                        if isCompression && inputBytes > 0 && outputBytes >= inputBytes {
+                            try? fileManager.removeItem(at: outputURL)
+                            
+                            await MainActor.run {
+                                if let index = self.items.firstIndex(where: { $0.id == item.id }) {
+                                    self.items[index].progress = 0
+                                    self.items[index].status = "Failed: Output is not smaller than input"
+                                }
+                                let alert = NSAlert()
+                                alert.messageText = "Compression Cancelled"
+                                alert.informativeText = "The compressed output size (\(outputBytes) bytes) is not smaller than the input (\(inputBytes) bytes). Task has been cancelled."
+                                alert.alertStyle = .warning
+                                alert.runModal()
+                            }
+                            break
+                        }
+                    }
+
                     await MainActor.run {
                         if let index = self.items.firstIndex(where: { $0.id == item.id }) {
-                            self.items[index].progress = 1
-                            self.items[index].status = "Complete"
+                            self.items.remove(at: index)
                         }
                     }
                     lastSuccessfulURL = outputURL
@@ -2298,11 +2357,11 @@ private final class BatchQueueModel: ObservableObject {
         return tool
     }
 
-    private static func outputURL(for item: QueueItem, tool: MediaTool) throws -> URL {
+    private func outputURL(for item: QueueItem, tool: MediaTool) throws -> URL {
         let source = item.url
         let directory = source.deletingLastPathComponent()
         let baseName = source.deletingPathExtension().lastPathComponent
-        let ext = outputExtension(for: item, tool: tool)
+        let ext = self.outputExtension(for: item, tool: tool)
         var candidate = directory.appendingPathComponent("\(baseName)-frink").appendingPathExtension(ext)
         var counter = 2
 
@@ -2314,7 +2373,7 @@ private final class BatchQueueModel: ObservableObject {
         return candidate
     }
 
-    private static func outputExtension(for item: QueueItem, tool: MediaTool) -> String {
+    private func outputExtension(for item: QueueItem, tool: MediaTool) -> String {
         switch tool {
         case .videoCompression:
             let sourceExt = item.url.pathExtension.lowercased()
@@ -2327,6 +2386,12 @@ private final class BatchQueueModel: ObservableObject {
             return "m4a"
         case .imageCompression:
             let sourceExt = item.url.pathExtension.lowercased()
+            if self.smartDecision {
+                let isAnimated = item.suggestion?.preserveAnimation ?? false
+                if !isAnimated && ["png", "jpg", "jpeg"].contains(sourceExt) {
+                    return "heic"
+                }
+            }
             return ["jpg", "jpeg", "png", "webp", "gif", "heic", "avif"].contains(sourceExt) ? sourceExt : "jpg"
         case .imageConversion:
             return "jpg"
